@@ -476,7 +476,7 @@ function pickQuoteForToday(quotes) {
 function renderQuote(text, dateKey) {
   const cleanedText = typeof text === 'string' ? text.trim() : '';
   if (!cleanedText) {
-    elements.quoteText.textContent = 'Tutaj pojawi się Twój cytat dnia.';
+    elements.quoteText.textContent = 'Tutaj pojawi się Twój cytat.';
     elements.quoteDate.textContent = '';
     return;
   }
@@ -492,7 +492,7 @@ function renderQuote(text, dateKey) {
   if (formattedDate) {
     const label =
       dateKey === getTodayKey()
-        ? `Cytat dnia — ${formattedDate}`
+        ? `Dzisiejszy cytat — ${formattedDate}`
         : `Ostatnio zapisany cytat — ${formattedDate}`;
     elements.quoteDate.textContent = label;
   } else {
