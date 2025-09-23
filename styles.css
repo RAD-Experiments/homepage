@@ -49,7 +49,7 @@ main.app {
 }
 
 .quote-text {
-  font-size: clamp(2rem, 4vw, 4rem);
+  font-size: clamp(1rem, 2.2vw, 1.8rem);
   line-height: 1.4;
   margin: 0;
   font-weight: 700;
