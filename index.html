@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cytat dnia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app" aria-live="polite">
+      <section
+        class="quote-card"
+        aria-labelledby="quote-text"
+        tabindex="-1"
+      >
+        <p id="quote-text" class="quote-text">
+          Tutaj pojawi się Twój cytat dnia.
+        </p>
+        <p id="quote-date" class="quote-date" aria-live="polite"></p>
+      </section>
+      <button id="reset-button" type="button" class="reset-button">
+        Zmień arkusz
+      </button>
+      <p id="fetch-status" class="fetch-status" role="status" aria-live="polite"></p>
+    </main>
+
+    <div
+      id="setup-modal"
+      class="modal hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      aria-describedby="modal-description"
+    >
+      <div class="modal-content">
+        <h2 id="modal-title">Podaj adres arkusza Google</h2>
+        <p id="modal-description">
+          Wklej adres URL eksportu CSV swojego publicznego arkusza Google, aby
+          wyświetlać codzienny cytat.
+        </p>
+        <form id="modal-form" novalidate>
+          <label class="visually-hidden" for="sheet-url"
+            >Adres CSV arkusza</label
+          >
+          <input
+            id="sheet-url"
+            name="sheet-url"
+            type="url"
+            inputmode="url"
+            autocomplete="off"
+            placeholder="https://docs.google.com/.../pub?output=csv"
+            required
+          />
+          <p id="url-error" class="url-error" role="alert" aria-live="assertive"></p>
+          <button type="submit" class="modal-submit">Zapisz</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="script.js" type="module"></script>
+  </body>
+</html>
