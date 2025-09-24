@@ -225,7 +225,7 @@ main.app {
 .modal-privacy-note {
   margin: -0.25rem 0 0;
   color: #4a4a4a;
-  font-size: 0.72rem;
+  font-size: 0.72rem; /* keep smaller than the main instruction text */
   line-height: 1.45;
 }
 
