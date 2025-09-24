@@ -222,6 +222,13 @@ main.app {
   box-shadow: 0 0 0 4px rgba(26, 26, 26, 0.2);
 }
 
+.modal-privacy-note {
+  margin: -0.25rem 0 0;
+  color: #4a4a4a;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
 .modal-submit {
   padding: 0.9rem;
   border: none;
