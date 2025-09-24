@@ -27,10 +27,17 @@ const elements = {
   modal: document.getElementById('setup-modal'),
   modalForm: document.getElementById('modal-form'),
   sheetInput: document.getElementById('sheet-url'),
-  urlError: document.getElementById('url-error')
+  urlError: document.getElementById('url-error'),
+  updateToast: document.getElementById('update-toast'),
+  updateToastButton: document.getElementById('update-toast-button')
 };
 
 let lastFocusedElement = null;
+let waitingServiceWorker = null;
+let isUpdateToastVisible = false;
+let hasShownUpdateToast = false;
+let hasRegisteredControllerChangeListener = false;
+let hasReloadedAfterControllerChange = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   applyRandomGradient();
@@ -63,6 +70,13 @@ function bindEventListeners() {
 
   if (elements.resetButton) {
     elements.resetButton.addEventListener('click', handleReset);
+  }
+
+  if (elements.updateToastButton) {
+    elements.updateToastButton.addEventListener(
+      'click',
+      handleUpdateToastButtonClick
+    );
   }
 
   if (elements.modal) {
@@ -517,8 +531,104 @@ function getTodayKey() {
 
 async function registerServiceWorker() {
   try {
-    await navigator.serviceWorker.register('./service-worker.js');
+    const registration = await navigator.serviceWorker.register(
+      './service-worker.js'
+    );
+    setupUpdateFlow(registration);
+    addControllerChangeListener();
   } catch (error) {
     console.warn('Nie udało się zarejestrować Service Workera.', error);
   }
+}
+
+function handleUpdateToastButtonClick() {
+  if (waitingServiceWorker) {
+    try {
+      waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
+    } catch (error) {
+      console.warn('Nie udało się wysłać komunikatu do Service Workera.', error);
+    }
+  }
+  waitingServiceWorker = null;
+  hideUpdateToast();
+}
+
+function showUpdateToast() {
+  if (!elements.updateToast || isUpdateToastVisible) {
+    return;
+  }
+
+  elements.updateToast.classList.remove('hidden');
+  elements.updateToast.setAttribute('aria-hidden', 'false');
+  isUpdateToastVisible = true;
+
+  if (!hasShownUpdateToast && elements.updateToastButton) {
+    elements.updateToastButton.focus();
+    hasShownUpdateToast = true;
+  }
+}
+
+function hideUpdateToast() {
+  if (!elements.updateToast) {
+    return;
+  }
+
+  elements.updateToast.classList.add('hidden');
+  elements.updateToast.setAttribute('aria-hidden', 'true');
+  isUpdateToastVisible = false;
+}
+
+function setupUpdateFlow(registration) {
+  if (!registration) {
+    return;
+  }
+
+  try {
+    if (registration.waiting && navigator.serviceWorker.controller) {
+      waitingServiceWorker = registration.waiting;
+      showUpdateToast();
+    }
+
+    registration.addEventListener('updatefound', () => {
+      const installingWorker = registration.installing;
+      if (!installingWorker) {
+        return;
+      }
+
+      installingWorker.addEventListener('statechange', () => {
+        if (installingWorker.state !== 'installed') {
+          return;
+        }
+
+        if (!navigator.serviceWorker.controller) {
+          waitingServiceWorker = null;
+          return;
+        }
+
+        waitingServiceWorker = registration.waiting || installingWorker;
+        showUpdateToast();
+      });
+    });
+  } catch (error) {
+    console.warn(
+      'Nie udało się skonfigurować obsługi aktualizacji Service Workera.',
+      error
+    );
+  }
+}
+
+function addControllerChangeListener() {
+  if (!('serviceWorker' in navigator) || hasRegisteredControllerChangeListener) {
+    return;
+  }
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hasReloadedAfterControllerChange) {
+      return;
+    }
+    hasReloadedAfterControllerChange = true;
+    window.location.reload();
+  });
+
+  hasRegisteredControllerChangeListener = true;
 }
