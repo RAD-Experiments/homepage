@@ -27,10 +27,19 @@ const elements = {
   modal: document.getElementById('setup-modal'),
   modalForm: document.getElementById('modal-form'),
   sheetInput: document.getElementById('sheet-url'),
-  urlError: document.getElementById('url-error')
+  urlError: document.getElementById('url-error'),
+  updateToast: document.getElementById('update-toast'),
+  updateToastButton: document.getElementById('update-toast-button')
 };
 
 let lastFocusedElement = null;
+let serviceWorkerRegistration = null;
+let waitingServiceWorker = null;
+let isUpdateToastVisible = false;
+let hasShownUpdateToast = false;
+let hasRegisteredControllerChangeListener = false;
+let hasReloadedAfterControllerChange = false;
+let hasBoundUpdateListener = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   applyRandomGradient();
@@ -63,6 +72,13 @@ function bindEventListeners() {
 
   if (elements.resetButton) {
     elements.resetButton.addEventListener('click', handleReset);
+  }
+
+  if (elements.updateToastButton) {
+    elements.updateToastButton.addEventListener(
+      'click',
+      handleUpdateToastButtonClick
+    );
   }
 
   if (elements.modal) {
@@ -515,10 +531,258 @@ function getTodayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function isServiceWorkerInWaitingState(worker) {
+  return Boolean(worker && worker.state === 'installed');
+}
+
+function setWaitingServiceWorker(worker) {
+  if (waitingServiceWorker === worker) {
+    return;
+  }
+
+  if (waitingServiceWorker) {
+    waitingServiceWorker.removeEventListener(
+      'statechange',
+      handleWaitingServiceWorkerStateChange
+    );
+  }
+
+  waitingServiceWorker = worker || null;
+
+  if (waitingServiceWorker) {
+    waitingServiceWorker.addEventListener(
+      'statechange',
+      handleWaitingServiceWorkerStateChange
+    );
+  }
+}
+
+async function getCurrentWaitingWorker() {
+  if (isServiceWorkerInWaitingState(waitingServiceWorker)) {
+    return waitingServiceWorker;
+  }
+
+  if (
+    serviceWorkerRegistration &&
+    isServiceWorkerInWaitingState(serviceWorkerRegistration.waiting)
+  ) {
+    setWaitingServiceWorker(serviceWorkerRegistration.waiting);
+    return serviceWorkerRegistration.waiting;
+  }
+
+  if (!('serviceWorker' in navigator) || !navigator.serviceWorker.getRegistration) {
+    return null;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (registration && isServiceWorkerInWaitingState(registration.waiting)) {
+      setupUpdateFlow(registration);
+      return registration.waiting;
+    }
+  } catch (error) {
+    console.warn('Nie udało się pobrać rejestracji Service Workera.', error);
+  }
+
+  return null;
+}
+
+function handleWaitingServiceWorkerStateChange(event) {
+  const worker = event.target;
+  if (!worker) {
+    return;
+  }
+
+  if (worker.state === 'activated') {
+    if (waitingServiceWorker === worker) {
+      setWaitingServiceWorker(null);
+    } else {
+      worker.removeEventListener(
+        'statechange',
+        handleWaitingServiceWorkerStateChange
+      );
+    }
+    triggerReload();
+    return;
+  }
+
+  if (worker.state === 'redundant') {
+    if (waitingServiceWorker === worker) {
+      setWaitingServiceWorker(null);
+    } else {
+      worker.removeEventListener(
+        'statechange',
+        handleWaitingServiceWorkerStateChange
+      );
+    }
+    const nextWaitingWorker =
+      serviceWorkerRegistration && serviceWorkerRegistration.waiting;
+
+    if (nextWaitingWorker && nextWaitingWorker !== worker) {
+      setWaitingServiceWorker(nextWaitingWorker);
+      showUpdateToast();
+      return;
+    }
+
+    hideUpdateToast();
+  }
+}
+
+function triggerReload() {
+  if (hasReloadedAfterControllerChange) {
+    return;
+  }
+  hasReloadedAfterControllerChange = true;
+  window.location.reload();
+}
+
+function handleControllerChange() {
+  triggerReload();
+}
+
 async function registerServiceWorker() {
   try {
-    await navigator.serviceWorker.register('./service-worker.js');
+    const registration = await navigator.serviceWorker.register(
+      './service-worker.js'
+    );
+    serviceWorkerRegistration = registration;
+    setupUpdateFlow(registration);
+    addControllerChangeListener();
+    navigator.serviceWorker.ready
+      .then((readyRegistration) => {
+        setupUpdateFlow(readyRegistration);
+      })
+      .catch((error) => {
+        console.warn(
+          'Nie udało się uzyskać aktywnej rejestracji Service Workera.',
+          error
+        );
+      });
   } catch (error) {
     console.warn('Nie udało się zarejestrować Service Workera.', error);
   }
+}
+
+async function handleUpdateToastButtonClick() {
+  const waitingWorker = await getCurrentWaitingWorker();
+
+  if (!waitingWorker) {
+    console.warn('Brak oczekującego Service Workera do aktywacji.');
+    hideUpdateToast();
+    return;
+  }
+
+  try {
+    waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+  } catch (error) {
+    console.warn('Nie udało się wysłać komunikatu do Service Workera.', error);
+    return;
+  }
+
+  if (elements.updateToastButton) {
+    elements.updateToastButton.disabled = true;
+    elements.updateToastButton.setAttribute('aria-disabled', 'true');
+  }
+
+  hideUpdateToast();
+}
+
+function showUpdateToast() {
+  if (!elements.updateToast || isUpdateToastVisible) {
+    return;
+  }
+
+  elements.updateToast.classList.remove('hidden');
+  elements.updateToast.setAttribute('aria-hidden', 'false');
+  isUpdateToastVisible = true;
+
+  if (elements.updateToastButton) {
+    elements.updateToastButton.disabled = false;
+    elements.updateToastButton.removeAttribute('aria-disabled');
+  }
+
+  if (!hasShownUpdateToast && elements.updateToastButton) {
+    elements.updateToastButton.focus();
+    hasShownUpdateToast = true;
+  }
+}
+
+function hideUpdateToast() {
+  if (!elements.updateToast) {
+    return;
+  }
+
+  elements.updateToast.classList.add('hidden');
+  elements.updateToast.setAttribute('aria-hidden', 'true');
+  isUpdateToastVisible = false;
+
+  if (elements.updateToastButton) {
+    elements.updateToastButton.removeAttribute('aria-disabled');
+    elements.updateToastButton.disabled = false;
+  }
+}
+
+function setupUpdateFlow(registration) {
+  if (!registration) {
+    return;
+  }
+
+  const isDifferentRegistration =
+    serviceWorkerRegistration && serviceWorkerRegistration !== registration;
+
+  serviceWorkerRegistration = registration;
+
+  if (isDifferentRegistration) {
+    hasBoundUpdateListener = false;
+  }
+
+  try {
+    if (registration.waiting && navigator.serviceWorker.controller) {
+      setWaitingServiceWorker(registration.waiting);
+      showUpdateToast();
+    }
+
+    if (!hasBoundUpdateListener) {
+      registration.addEventListener('updatefound', () => {
+        const installingWorker = registration.installing;
+        if (!installingWorker) {
+          return;
+        }
+
+        installingWorker.addEventListener('statechange', () => {
+          if (installingWorker.state !== 'installed') {
+            return;
+          }
+
+          if (!navigator.serviceWorker.controller) {
+            setWaitingServiceWorker(null);
+            return;
+          }
+
+          const newWaitingWorker = registration.waiting || installingWorker;
+          setWaitingServiceWorker(newWaitingWorker);
+          showUpdateToast();
+        });
+      });
+      hasBoundUpdateListener = true;
+    }
+  } catch (error) {
+    console.warn(
+      'Nie udało się skonfigurować obsługi aktualizacji Service Workera.',
+      error
+    );
+  }
+}
+
+function addControllerChangeListener() {
+  if (!('serviceWorker' in navigator) || hasRegisteredControllerChangeListener) {
+    return;
+  }
+
+  navigator.serviceWorker.addEventListener(
+    'controllerchange',
+    handleControllerChange
+  );
+
+  hasRegisteredControllerChangeListener = true;
 }
