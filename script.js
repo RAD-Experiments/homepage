@@ -506,7 +506,7 @@ function renderQuote(text, dateKey) {
   if (formattedDate) {
     const label =
       dateKey === getTodayKey()
-        ? `Dzisiejszy cytat — ${formattedDate}`
+        ? formattedDate
         : `Ostatnio zapisany cytat — ${formattedDate}`;
     elements.quoteDate.textContent = label;
   } else {
