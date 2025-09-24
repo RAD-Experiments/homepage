@@ -18,25 +18,23 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys
-            .filter(
-              (key) =>
-                key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME
-            )
-            .map((key) => caches.delete(key))
-        )
-      )
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys
+          .filter(
+            (key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME
+          )
+          .map((key) => caches.delete(key))
+      );
+      await self.clients.claim();
+    })()
   );
-  self.clients.claim();
 });
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+    event.waitUntil(self.skipWaiting());
   }
 });
 
