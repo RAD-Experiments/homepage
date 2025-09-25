@@ -181,8 +181,55 @@ main.app {
   pointer-events: none;
 }
 
+.modal-container {
+  display: flex;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  align-items: stretch;
+  width: min(92vw, 1040px);
+}
+
+.modal-video {
+  flex: 2 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 24px;
+  padding: 1.5rem;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+  text-align: left;
+}
+
+.modal-video__wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  margin-bottom: 1rem;
+}
+
+.modal-video iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 16px;
+}
+
+.modal-video__caption {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #1a1a1a;
+  line-height: 1.4;
+}
+
 .modal-content {
-  width: min(90vw, 420px);
+  flex: 1 1 0;
+  min-width: clamp(260px, 28vw, 360px);
   background: rgba(255, 255, 255, 0.85);
   border-radius: 24px;
   padding: 2.5rem 2rem;
@@ -279,6 +326,21 @@ body.modal-open {
 @media (max-width: 600px) {
   .quote-card {
     padding: clamp(1.5rem, 6vw, 2.5rem);
+  }
+
+  .modal-container {
+    flex-direction: column;
+    width: min(94vw, 520px);
+  }
+
+  .modal-video,
+  .modal-content {
+    padding: 1.75rem 1.5rem;
+    text-align: center;
+  }
+
+  .modal-video__caption {
+    font-size: 0.9rem;
   }
 
   .fetch-status {
