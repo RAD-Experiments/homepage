@@ -50,34 +50,49 @@
       aria-labelledby="modal-title"
       aria-describedby="modal-description"
     >
-      <div class="modal-content">
-        <h2 id="modal-title">Podaj adres arkusza Google</h2>
-        <p id="modal-description">
-          Wklej adres URL eksportu CSV swojego publicznego arkusza Google, aby
-          wyświetlać codzienny cytat.
-        </p>
-        <form id="modal-form" novalidate>
-          <label class="visually-hidden" for="sheet-url"
-            >Adres CSV arkusza</label
-          >
-          <input
-            id="sheet-url"
-            name="sheet-url"
-            type="url"
-            inputmode="url"
-            autocomplete="off"
-            placeholder="https://docs.google.com/.../pub?output=csv"
-            aria-describedby="privacy-note url-error"
-            required
-          />
-          <p id="privacy-note" class="modal-privacy-note">
-            „Maksymalna prywatność. Nie tworzymy kont, nie zbieramy danych.
-            Twoje treści zostają tylko na Twoim komputerze – nic nie trafia na
-            serwer ani do chmury.”
+      <div class="modal-container">
+        <aside class="modal-video" aria-label="Instrukcja wideo">
+          <div class="modal-video__wrapper">
+            <iframe
+              src="https://www.youtube.com/embed/WPvG8sPFEvo"
+              title="Jak przygotować i wkleić plik CSV"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+            ></iframe>
+          </div>
+          <p class="modal-video__caption">Zobacz, jak stworzyć i wkleić swój arkusz.</p>
+        </aside>
+        <div class="modal-content">
+          <h2 id="modal-title">Podaj adres arkusza Google</h2>
+          <p id="modal-description">
+            Wklej adres URL eksportu CSV swojego publicznego arkusza Google, aby
+            wyświetlać codzienny cytat.
           </p>
-          <p id="url-error" class="url-error" role="alert" aria-live="assertive"></p>
-          <button type="submit" class="modal-submit">Zapisz</button>
-        </form>
+          <form id="modal-form" novalidate>
+            <label class="visually-hidden" for="sheet-url"
+              >Adres CSV arkusza</label
+            >
+            <input
+              id="sheet-url"
+              name="sheet-url"
+              type="url"
+              inputmode="url"
+              autocomplete="off"
+              placeholder="https://docs.google.com/.../pub?output=csv"
+              aria-describedby="privacy-note url-error"
+              required
+            />
+            <p id="privacy-note" class="modal-privacy-note">
+              „Maksymalna prywatność. Nie tworzymy kont, nie zbieramy danych.
+              Twoje treści zostają tylko na Twoim komputerze – nic nie trafia na
+              serwer ani do chmury.”
+            </p>
+            <p id="url-error" class="url-error" role="alert" aria-live="assertive"></p>
+            <button type="submit" class="modal-submit">Zapisz</button>
+          </form>
+        </div>
       </div>
     </div>
 
