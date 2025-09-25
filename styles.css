@@ -253,8 +253,8 @@ main.app {
 .modal-privacy-note {
   margin: -0.25rem 0 0;
   color: #4a4a4a;
-  font-size: 0.85rem;
-  line-height: 1.5;
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 
 .modal-submit {
