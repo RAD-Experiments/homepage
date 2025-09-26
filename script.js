@@ -29,7 +29,8 @@ const elements = {
   sheetInput: document.getElementById('sheet-url'),
   urlError: document.getElementById('url-error'),
   updateToast: document.getElementById('update-toast'),
-  updateToastButton: document.getElementById('update-toast-button')
+  updateToastButton: document.getElementById('update-toast-button'),
+  tutorialVideo: document.querySelector('.modal-video iframe')
 };
 
 let lastFocusedElement = null;
@@ -38,6 +39,10 @@ let isUpdateToastVisible = false;
 let hasShownUpdateToast = false;
 let hasRegisteredControllerChangeListener = false;
 let hasReloadedAfterControllerChange = false;
+let tutorialVideoOriginalSrc =
+  elements.tutorialVideo && elements.tutorialVideo.src
+    ? elements.tutorialVideo.src
+    : '';
 
 document.addEventListener('DOMContentLoaded', () => {
   applyRandomGradient();
@@ -234,6 +239,7 @@ function clearModalError() {
 function showModal() {
   if (!elements.modal) return;
   lastFocusedElement = document.activeElement;
+  restoreTutorialVideo();
   elements.modal.classList.remove('hidden');
   elements.modal.setAttribute('aria-hidden', 'false');
   document.body.classList.add('modal-open');
@@ -247,6 +253,7 @@ function showModal() {
 
 function hideModal() {
   if (!elements.modal) return;
+  stopTutorialVideo();
   elements.modal.classList.add('hidden');
   elements.modal.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('modal-open');
@@ -256,6 +263,30 @@ function hideModal() {
     elements.quoteCard.focus();
   }
   lastFocusedElement = null;
+}
+
+function stopTutorialVideo() {
+  if (!elements.tutorialVideo) {
+    return;
+  }
+
+  if (!tutorialVideoOriginalSrc) {
+    tutorialVideoOriginalSrc = elements.tutorialVideo.src || '';
+  }
+
+  if (elements.tutorialVideo.src) {
+    elements.tutorialVideo.src = '';
+  }
+}
+
+function restoreTutorialVideo() {
+  if (!elements.tutorialVideo || !tutorialVideoOriginalSrc) {
+    return;
+  }
+
+  if (elements.tutorialVideo.src !== tutorialVideoOriginalSrc) {
+    elements.tutorialVideo.src = tutorialVideoOriginalSrc;
+  }
 }
 
 function trapModalFocus(event) {
